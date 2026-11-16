@@ -25,9 +25,11 @@ svg { width: 20px; height: 20px; display: block; flex-shrink: 0; }
 .skip:focus { transform: none; }
 .rail { width: var(--rail); position: fixed; z-index: 3; inset: 0 auto 0 0; display: flex; flex-direction: column; background: #fbfcf5; border-right: 1px solid var(--line); padding: 30px 19px 20px; }
 .brand { display: flex; align-items: center; gap: 12px; width: fit-content; margin: 2px 0 43px 12px; }
-.brand-mark, .brand-mark img { width: 44px; height: 44px; display: block; }
-.brand strong { display: block; font-family: "Songti SC", "Noto Serif CJK SC", SimSun, serif; font-size: 25px; letter-spacing: .11em; line-height: 1.15; font-weight: 800; }
-.brand small { display: block; font-size: 9px; color: var(--muted); letter-spacing: .19em; margin-top: 4px; font-weight: 750; }
+.brand-mark { width: 45px; height: 45px; flex-shrink: 0; display: block; overflow: hidden; border-radius: 15px; box-shadow: 0 2px 8px #254c431e; }
+.brand-mark img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.mobile-brand { display: none; }
+.brand strong { display: block; font-family: "Songti SC", "Noto Serif CJK SC", SimSun, serif; font-size: 25px; letter-spacing: .16em; line-height: 1.15; font-weight: 700; }
+.brand small { display: block; font-size: 9px; color: var(--muted); letter-spacing: .24em; margin-top: 5px; font-weight: 650; }
 .nav { display: grid; gap: 7px; }
 .nav a { border-radius: 10px; color: #4e6251; display: flex; gap: 12px; align-items: center; padding: 12px 13px; font-weight: 590; min-height: 46px; }
 .nav a:hover { background: #edf1e7; }
@@ -351,18 +353,35 @@ dialog::backdrop { background: #1d3d3759; backdrop-filter: blur(5px); }
   position: absolute;
   inset: 0 0 0 auto;
   width: 50%;
+  overflow: hidden;
+  container-type: size;
   pointer-events: none;
-  background-image: url('care-art.webp?v=care');
-  background-size: 200% 200%;
-  background-repeat: no-repeat;
-  -webkit-mask-image: linear-gradient(to right, transparent 1%, #000 44%);
-  mask-image: linear-gradient(to right, transparent 1%, #000 44%);
   opacity: .83;
 }
-.practice-art[data-art="breath"] { background-position: left top; }
-.practice-art[data-art="reflect"] { background-position: right top; }
-.practice-art[data-art="move"] { background-position: left bottom; }
-.practice-art[data-art="rain"], .practice-art[data-art="dawn"], .practice-art[data-art="tide"], .practice-art[data-art="twilight"] { background-position: right bottom; }
+.practice-art::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 100%;
+  width: min(100cqw, 100cqh);
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+  background-image: url('care-art.webp?v=care');
+  /* Each source panel is square. Keep the rendered sprite window square too. */
+  background-size: 200% 200%;
+  background-repeat: no-repeat;
+  mask-image: linear-gradient(to right, transparent 1%, #000 38%),
+    linear-gradient(to bottom, transparent, #000 12%, #000 87%, transparent);
+  mask-composite: intersect;
+}
+.practice-art[data-art="breath"]::before { background-position: left top; }
+.practice-art[data-art="reflect"]::before { background-position: right top; }
+.practice-art[data-art="move"]::before { background-position: left bottom; }
+.practice-art[data-art="rain"]::before,
+.practice-art[data-art="dawn"]::before,
+.practice-art[data-art="tide"]::before,
+.practice-art[data-art="twilight"]::before { background-position: right bottom; }
 .practice-art[data-art="dawn"] { filter: sepia(.34) saturate(.82); }
 .practice-art[data-art="tide"] { filter: hue-rotate(20deg) saturate(.8); }
 .practice-art[data-art="twilight"] { filter: hue-rotate(55deg) saturate(.78) brightness(.91); }
@@ -387,6 +406,9 @@ dialog::backdrop { background: #1d3d3759; backdrop-filter: blur(5px); }
 .volume-row { display: flex; gap: 12px; align-items: center; font-size: 13px; }
 .volume-row span { white-space: nowrap; }
 @media (max-width: 760px) {
+  .crumb > span:first-child { display: none; }
+  .mobile-brand { display: inline-flex; }
+  .mobile-brand .brand-mark { width: 29px; height: 29px; border-radius: 9px; }
   .care-card-body { padding: 14px; width: 80%; }
   .care-card { min-height: 190px; }
   .practice-art { width: 57%; opacity: .7; }
