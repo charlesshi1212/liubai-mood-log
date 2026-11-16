@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fcf8f5">
+  <meta name="description" content="用一分钟记下情绪，回顾触发因素，找到适合当下的自我关怀练习。">
+  <title>留白 Mood Log · 情绪日记与自我关怀</title>
+  <link rel="icon" href="mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">跳到主要内容</a>
+  <div class="shell">
+    <aside class="rail" aria-label="产品导航">
+      <a class="brand" href="#home" aria-label="留白首页">
+        <span class="brand-mark" aria-hidden="true"><img src="mark.svg" alt=""></span>
+        <span><strong>留白</strong><small>MOOD LOG</small></span>
+      </a>
+      <nav class="nav" aria-label="主菜单">
+        <a href="#home" data-nav="home"><span data-icon="grid"></span><span>今日</span></a>
+        <a href="#journal" data-nav="journal"><span data-icon="book"></span><span>情绪日记</span></a>
+        <a href="#insights" data-nav="insights"><span data-icon="chart"></span><span>情绪洞察</span></a>
+        <a href="#care" data-nav="care"><span data-icon="heart"></span><span>自我关怀</span></a>
+      </nav>
+      <footer class="rail-footer">
+        <button class="text-button privacy-link" type="button" data-action="privacy"><span data-icon="shield"></span>隐私与数据</button>
+        <div class="rail-meta"><span class="local-dot"></span> 日记仅保存在此浏览器</div>
+      </footer>
+    </aside>
+    <div class="page">
+      <header class="topbar">
+        <div class="crumb"><span>我的空间</span><span data-icon="chevron"></span><strong id="crumb">今日</strong></div>
+        <div class="top-actions">
+          <button class="mode-button" id="mode" type="button" data-action="mode" aria-pressed="false"></button>
+          <button class="mobile-privacy icon-button" type="button" data-action="privacy" aria-label="隐私与数据"><span data-icon="shield"></span></button>
+          <div class="avatar" title="我的空间" aria-hidden="true"><span data-icon="person"></span></div>
+        </div>
+      </header>
+      <main id="main" tabindex="-1"></main>
+      <footer class="page-footer"><span>留白 · 情绪日记与自我关怀</span><span>用自己的节奏，照顾自己。</span></footer>
+    </div>
+  </div>
+  <dialog id="dialog" aria-labelledby="dialog-title"><div id="dialog-content"></div></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
