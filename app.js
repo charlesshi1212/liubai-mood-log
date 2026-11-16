@@ -224,19 +224,19 @@ function drawChart() {
   context.font = '10px "PingFang SC", system-ui, sans-serif';
   context.textBaseline = "middle";
   for (let index = 0; index < moods.length; index++) {
-    context.strokeStyle = "#eee1e1";
+    context.strokeStyle = "#e0e8dd";
     context.setLineDash([3, 4]);
     context.beginPath();
     context.moveTo(left, y(index));
     context.lineTo(right, y(index));
     context.stroke();
-    context.fillStyle = "#766573";
+    context.fillStyle = "#566959";
     context.textAlign = "left";
     context.fillText(moods[index].label, 0, y(index));
   }
   context.setLineDash([]);
   context.lineWidth = 2;
-  context.strokeStyle = "#b488a5";
+  context.strokeStyle = "#769582";
   context.lineJoin = "round";
   context.beginPath();
   let hasPrevious = false;
@@ -258,12 +258,12 @@ function drawChart() {
       context.arc(x(index), y(level), 5, 0, 2 * Math.PI);
       context.fillStyle = moods[level].color;
       context.fill();
-      context.strokeStyle = "#fffcfa";
+      context.strokeStyle = "#fffef8";
       context.stroke();
     }
     const step = chartModel.length === 7 ? (width < 360 ? 2 : 1) : (width < 500 ? 7 : 4);
     if ((index % step === 0 && index < chartModel.length - 2) || index === chartModel.length - 1 || (step === 1 && index === chartModel.length - 2)) {
-      context.fillStyle = "#766573";
+      context.fillStyle = "#566959";
       context.textAlign = index === chartModel.length - 1 ? "right" : "center";
       context.fillText(dateShort.format(point.date), index === chartModel.length - 1 ? width : x(index), height - 8);
     }
