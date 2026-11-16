@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  --canvas: #f7f8f0;
+  --canvas: #e7efec;
   --paper: #fffef8;
   --ink: #243b2c;
   --muted: #59675a;
@@ -56,7 +56,7 @@ main { padding-top: 27px; padding-bottom: 24px; min-height: calc(100vh - 145px);
 main:focus { outline: none; }
 .page-footer { color: var(--muted); display: flex; justify-content: space-between; gap: 16px; font-size: 11px; padding-top: 12px; padding-bottom: 21px; }
 .hero { position: relative; min-height: 252px; background: #edf1e4; border: 1px solid #dfe7d7; border-radius: 19px; overflow: hidden; isolation: isolate; display: flex; align-items: center; margin-bottom: 18px; }
-.hero-art { position: absolute; z-index: -2; inset: 0 0 0 41%; background-image: url('hero.webp?v=sage'); background-size: cover; background-position: center 46%; }
+.hero-art { position: absolute; z-index: -2; inset: 0 0 0 41%; background-image: url('hero.webp?v=botanical'); background-size: cover; background-position: center 46%; }
 .hero-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #edf1e4, #edf1e400 38%); }
 .hero-body { padding: 28px 36px; max-width: 64%; }
 .eyebrow { color: #4b6651; font-size: 12px; font-weight: 700; letter-spacing: .08em; display: flex; align-items: center; gap: 8px; }
@@ -222,3 +222,105 @@ textarea { width: 100%; padding: 10px 11px; resize: vertical; min-height: 74px; 
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; } }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+/* Mist, frosted glass and botanical illustration */
+:root {
+  --canvas: #e7efec;
+  --paper: #f7faf6e8;
+  --ink: #223a36;
+  --muted: #4b625d;
+  --line: #ffffffba;
+}
+body {
+  background: radial-gradient(ellipse at 8% 0%, #fff9e9 0%, transparent 52%),
+    linear-gradient(125deg, #eef0e5 12%, #dbe8e3 58%, #c4d9dc 100%);
+  background-attachment: fixed;
+}
+.rail {
+  background: linear-gradient(160deg, #fffdf0bd, #e9f2f0c7);
+  border-color: #fff9;
+  box-shadow: 9px 0 40px #345c510a;
+  backdrop-filter: blur(22px);
+}
+.nav a { transition: background .2s ease, color .2s ease; }
+.nav a[aria-current="page"] {
+  background: #315c51;
+  color: #fbfff8;
+  box-shadow: 0 5px 14px #244f412a, inset 0 1px 0 #fff3;
+}
+.topbar {
+  background: #f6fcf64a;
+  border-color: #fff9;
+  backdrop-filter: blur(14px);
+}
+.hero {
+  min-height: 305px;
+  margin-bottom: 20px;
+  border: 1px solid #fffced;
+  border-radius: 27px;
+  background: #f1f1e5;
+  box-shadow: 0 16px 42px #234d4212, inset 0 1px 0 #fff;
+}
+.hero-art { left: 32%; background-position: 50% 48%; }
+.hero-art::after { background: linear-gradient(90deg, #f1f1e5, #f1f1e5a3 18%, transparent 46%); }
+.hero-body { max-width: 68%; padding: 32px 42px; }
+.hero h1 { letter-spacing: .04em; font-size: clamp(34px, 4.3vw, 58px); line-height: 1.16; }
+.hero .primary { margin-top: 22px; border-radius: 30px; padding-inline: 19px; }
+.primary { background: #254c43; box-shadow: inset 0 1px 0 #fff3, 0 4px 12px #22483d1c; }
+.primary:hover:not(:disabled) { background: #356257; }
+.surface {
+  border-radius: 20px;
+  border: 1px solid #fffdf5df;
+  background: linear-gradient(136deg, #fffefaab, #f5fbf695);
+  box-shadow: 0 8px 21px #3557510c, inset 0 1px 0 #fff8;
+  backdrop-filter: blur(20px);
+}
+.home-checkin {
+  background: linear-gradient(110deg, #fffdf8d9 32%, #f5fbf4a1);
+}
+.section-head h2 { font-weight: 750; }
+.mode-button, .secondary {
+  background: #fffc;
+  border-color: #ffffffd9;
+  box-shadow: 0 2px 10px #29483b0d;
+}
+.mood-option {
+  background: color-mix(in srgb, var(--mood-bg) 88%, transparent);
+  border-radius: 13px;
+  box-shadow: inset 0 1px 0 #fffc;
+}
+.care-feature {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid #fcfffad4;
+  background: #e1ede5;
+  border-radius: 13px;
+}
+.care-feature::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 0 57%;
+  background: linear-gradient(90deg, #e1ede5, #e1ede555 54%, #e1ede544),
+    url('hero.webp?v=botanical') 83% 48% / cover;
+  opacity: .75;
+}
+.care-feature .round-arrow { background: #fbfff5ed; }
+.dialog-panel {
+  background: linear-gradient(145deg, #fffef3e8, #e7f1ebdb);
+}
+dialog {
+  border-color: #fffdf5df;
+  background: #f2f8f3de;
+  backdrop-filter: blur(24px);
+}
+dialog::backdrop { background: #1d3d3759; backdrop-filter: blur(5px); }
+@media (max-width: 760px) {
+  .hero { min-height: 247px; border-radius: 20px; }
+  .hero-body { max-width: 84%; padding: 23px 18px; }
+  .hero h1 { font-size: clamp(29px, 7.9vw, 44px); }
+  .hero-art { left: 26%; background-position: 58% center; }
+  .hero-art::after { background: linear-gradient(90deg, #f1f1e5, #f1f1e5b3 44%, transparent); }
+  .rail { border-top: 1px solid #fff9; }
+}

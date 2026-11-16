@@ -303,7 +303,7 @@ function homePage() {
     '<div class="eyebrow">' + icon("sun") + escapeHtml(dateLong.format(date)) + '</div><h1>今天，给情绪留一点白</h1>' +
     '<p>记下此刻的感受，也给自己几分钟喘息。</p>' +
     actionButton("log", "记录此刻", "plus") + '</div></section>' +
-    '<section class="surface">' + sectionHead("此刻的情绪", "点选一个最接近的感受") + moodOptions() + '</section>' +
+    '<section class="surface home-checkin">' + sectionHead("此刻的情绪", "点选一个最接近的感受") + moodOptions() + '</section>' +
     '<div class="overview"><section class="surface">' + sectionHead("最近 7 天的情绪", demoMode ? "示例数据 · 每天显示最后一次记录" : "每天显示最后一次记录", routeLink("insights", "查看洞察")) +
     chartPanel(recent(records, 7), 7) + '</section><section class="surface">' + sectionHead("给此刻的练习", "", routeLink("care", "全部练习")) +
     careStrip(suggestion.key, true, suggestion.reason) + rest.map(key => careStrip(key, false)).join("") + '</section></div>' +
