@@ -324,3 +324,75 @@ dialog::backdrop { background: #1d3d3759; backdrop-filter: blur(5px); }
   .hero-art::after { background: linear-gradient(90deg, #f1f1e5, #f1f1e5b3 44%, transparent); }
   .rail { border-top: 1px solid #fff9; }
 }
+
+/* Illustrated practice cards and the local audio library */
+.care-grid { gap: 15px; }
+.care-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 0;
+  min-height: 208px;
+}
+.care-card-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 18px 20px;
+  min-height: inherit;
+  width: 75%;
+}
+.care-card-body p { line-height: 1.55; }
+.care-card-body .secondary { margin-top: auto; }
+.practice-art {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 50%;
+  pointer-events: none;
+  background-image: url('care-art.webp?v=care');
+  background-size: 200% 200%;
+  background-repeat: no-repeat;
+  -webkit-mask-image: linear-gradient(to right, transparent 1%, #000 44%);
+  mask-image: linear-gradient(to right, transparent 1%, #000 44%);
+  opacity: .83;
+}
+.practice-art[data-art="breath"] { background-position: left top; }
+.practice-art[data-art="reflect"] { background-position: right top; }
+.practice-art[data-art="move"] { background-position: left bottom; }
+.practice-art[data-art="rain"], .practice-art[data-art="dawn"], .practice-art[data-art="tide"], .practice-art[data-art="twilight"] { background-position: right bottom; }
+.practice-art[data-art="dawn"] { filter: sepia(.34) saturate(.82); }
+.practice-art[data-art="tide"] { filter: hue-rotate(20deg) saturate(.8); }
+.practice-art[data-art="twilight"] { filter: hue-rotate(55deg) saturate(.78) brightness(.91); }
+.care-graphic[data-care="dawn"] { background: #eedfc8; color: #5c4b34; }
+.care-graphic[data-care="tide"] { background: #d6e9e8; color: #355959; }
+.care-graphic[data-care="twilight"] { background: #e7e5f1; color: #55496f; }
+.audio-row {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid #fff;
+}
+.audio-row strong, .audio-row small { display: block; }
+.audio-row strong { overflow-wrap: anywhere; }
+.audio-row small { color: var(--muted); font-size: 11px; }
+.audio-actions { display: flex; align-items: center; gap: 4px; }
+.audio-actions .secondary { min-height: 34px; padding: 4px 10px; font-size: 12px; }
+.local-player { width: 100%; }
+.local-audio-status { margin-top: 8px; }
+.volume-row { display: flex; gap: 12px; align-items: center; font-size: 13px; }
+.volume-row span { white-space: nowrap; }
+@media (max-width: 760px) {
+  .care-card-body { padding: 14px; width: 80%; }
+  .care-card { min-height: 190px; }
+  .practice-art { width: 57%; opacity: .7; }
+}
+@media (max-width: 420px) {
+  .care-card-body { width: 73%; }
+  .audio-row { gap: 6px; grid-template-columns: 38px minmax(0, 1fr) auto; }
+  .audio-row .care-graphic { width: 36px; height: 36px; }
+}

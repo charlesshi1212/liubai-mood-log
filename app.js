@@ -56,6 +56,126 @@ const practices = {
   }
 };
 
+const musicTracks = {
+  rain: { color: "rain", chords: [[48, 55, 60, 64, 67], [45, 52, 57, 60, 64], [41, 48, 53, 57, 64], [43, 50, 55, 60, 62]], interval: 10, rain: true },
+  dawn: { color: "dawn", chords: [[48, 55, 59, 62, 64], [45, 52, 55, 59, 60], [41, 48, 52, 55, 57], [43, 50, 54, 57, 59]], interval: 8 },
+  tide: { color: "tide", chords: [[50, 57, 60, 64, 65], [46, 53, 57, 60, 62], [41, 48, 52, 55, 57], [48, 55, 58, 62, 64]], interval: 11 },
+  twilight: { color: "twilight", chords: [[45, 52, 55, 59, 60], [41, 48, 52, 55, 57], [48, 55, 59, 62, 64], [43, 50, 55, 57, 62]], interval: 12 }
+};
+
+Object.assign(practices, {
+  dawn: { name: "晨光里的钢琴", category: "音乐", minutes: 3, icon: "music",
+    description: "明亮的七和弦配上稀疏的键音，像晨光一点点照进房间。",
+    steps: ["把音量调到舒服的程度。", "听听每一组和弦如何慢慢展开。"] },
+  tide: { name: "潮汐与长音", category: "音乐", minutes: 4, icon: "music",
+    description: "低音轻轻起伏，绵长的和弦像缓缓退去的潮水。",
+    steps: ["找个舒服的坐姿，放松肩膀。", "听着长音的起落，保持自然呼吸。"] },
+  twilight: { name: "暮色微光", category: "音乐", minutes: 4, icon: "music",
+    description: "慢速和弦和柔和的泛音，留给想安静一下的时刻。",
+    steps: ["调低音量，让声音轻轻铺在背景里。", "可以闭上眼，也可以看向窗外。"] }
+});
+
+let audioLibrary = [];
+let audioDatabase;
+let localAudioUrl;
+let audioPickerBusy = false;
+let audioLibraryUnavailable = false;
+
+function openAudioDatabase() {
+  if (!audioDatabase) {
+    audioDatabase = new Promise((resolve, reject) => {
+      const request = indexedDB.open("liubai-audio-library", 1);
+      request.onupgradeneeded = () => request.result.createObjectStore("tracks", { keyPath: "id" });
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+  return audioDatabase;
+}
+
+async function audioTransaction(mode, operation) {
+  const database = await openAudioDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction("tracks", mode);
+    const request = operation(transaction.objectStore("tracks"));
+    transaction.oncomplete = () => resolve(request?.result);
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
+  });
+}
+
+async function loadAudioLibrary() {
+  try {
+    audioLibrary = await audioTransaction("readonly", tracks => tracks.getAll());
+    audioLibrary.sort((a, b) => b.added - a.added);
+  } catch {
+    audioLibraryUnavailable = true;
+  }
+  if (view === "care") render();
+}
+
+async function importAudio(files) {
+  if (audioPickerBusy || !files.length) return;
+  const limit = 30 * 1024 * 1024;
+  const supported = files.filter(file => file.size > 0 && file.size <= limit &&
+    (file.type.startsWith("audio/") || /\.(mp3|m4a|aac|wav|ogg|flac|opus|webm)$/i.test(file.name)));
+  if (!supported.length) {
+    showToast("请选择音频文件，单个文件最大 30 MB。");
+    return;
+  }
+  audioPickerBusy = true;
+  try {
+    const added = Date.now();
+    const records = supported.map(file => ({
+      id: crypto.randomUUID(), name: file.name, size: file.size, added, blob: file
+    }));
+    await audioTransaction("readwrite", tracks => {
+      for (const record of records) tracks.add(record);
+    });
+    audioLibrary = [...records, ...audioLibrary];
+    if (view === "care") render();
+    showToast("已保存 " + records.length + " 首音频" +
+      (records.length < files.length ? "。其余文件格式或大小不符合要求。" : "。"));
+  } catch {
+    showToast("保存失败，请检查浏览器空间和存储权限。");
+  } finally {
+    audioPickerBusy = false;
+  }
+}
+
+async function deleteAudio(id) {
+  try {
+    await audioTransaction("readwrite", tracks => tracks.delete(id));
+    audioLibrary = audioLibrary.filter(track => track.id !== id);
+    dialog.close();
+    if (view === "care") render();
+    showToast("已移除这首音频。");
+  } catch {
+    showToast("移除失败，请重试。");
+  }
+}
+
+function releaseLocalAudio() {
+  dialogContent.querySelector("audio")?.pause();
+  if (localAudioUrl) URL.revokeObjectURL(localAudioUrl);
+  localAudioUrl = null;
+}
+
+function openLocalAudio(id) {
+  const track = audioLibrary.find(item => item.id === id);
+  if (!track) return;
+  releaseLocalAudio();
+  localAudioUrl = URL.createObjectURL(track.blob);
+  openDialog("播放本地音频", escapeHtml(track.name),
+    '<audio class="local-player" controls preload="metadata" src="' + escapeHtml(localAudioUrl) +
+    '"></audio><p class="helper local-audio-status" role="status"></p>');
+  const player = dialogContent.querySelector("audio");
+  player.play().catch(() => {});
+  player.addEventListener("error", () => {
+    dialogContent.querySelector(".local-audio-status").textContent = "此浏览器无法播放该音频编码。可以试试 MP3 或 WAV。";
+  });
+}
+
 const titles = { home: "今日", journal: "情绪日记", insights: "情绪洞察", care: "自我关怀" };
 const main = document.querySelector("#main");
 const dialog = document.querySelector("#dialog");
@@ -364,6 +484,25 @@ function insightsPage() {
     '</section></div></div>';
 }
 
+function careArtwork(key) {
+  const art = musicTracks[key]?.color ?? key;
+  return '<span class="practice-art" data-art="' + art + '" aria-hidden="true"></span>';
+}
+
+function audioShelf() {
+  const list = audioLibrary.map(track =>
+    '<article class="audio-row">' + careGraphic("rain") + '<div><strong>' + escapeHtml(track.name) +
+    '</strong><small>' + (track.size / (1024 * 1024)).toFixed(1) + ' MB</small></div><div class="audio-actions">' +
+    actionButton("local-audio", "播放", "play", track.id, "secondary") +
+    actionButton("ask-remove-audio", '<span class="sr-only">移除 ' + escapeHtml(track.name) + '</span>', "trash", track.id, "icon-button") +
+    '</div></article>').join("");
+  return '<section class="surface audio-shelf">' + sectionHead("我的音频", "添加喜欢的音乐或自然声。文件仅保存在此浏览器。",
+    audioLibraryUnavailable ? "" : actionButton("import-audio", "添加音频", "plus", "", "secondary")) +
+    '<input id="audio-files" type="file" accept="audio/*,.m4a,.mp3,.wav,.ogg,.flac,.opus" multiple hidden>' +
+    (list || '<p class="helper">' + (audioLibraryUnavailable ? "此浏览器当前无法保存音频。" : "支持 MP3、M4A、WAV 等常见音频，每个文件最多 30 MB。") +
+    '</p>') + '</section>';
+}
+
 function carePage() {
   const recommendation = careRecommendation();
   const ordered = [recommendation.key, ...Object.keys(practices).filter(key => key !== recommendation.key)];
@@ -377,10 +516,11 @@ function carePage() {
     chips(["全部", "冥想", "音乐", "运动", "书写"], [practiceFilter], "care-filter") + '</div></div>' +
     '<div class="care-grid">' + visible.map(key => {
       const item = practices[key];
-      return '<article class="surface care-card">' + careGraphic(key) +
+      return '<article class="surface care-card">' + careArtwork(key) + '<div class="care-card-body">' + careGraphic(key) +
         '<div><div class="care-meta">' + item.category + ' · ' + item.minutes + ' 分钟</div><h2>' + item.name +
-        '</h2></div><p>' + item.description + '</p>' + actionButton("practice", "开始练习", "arrow", key, "secondary") + '</article>';
+        '</h2></div><p>' + item.description + '</p>' + actionButton("practice", item.category === "音乐" ? "试听" : "开始练习", item.category === "音乐" ? "play" : "arrow", key, "secondary") + '</div></article>';
     }).join("") + '</div></section>' +
+    (practiceFilter === "全部" || practiceFilter === "音乐" ? audioShelf() : "") +
     (feedback.length ? '<section class="surface">' + sectionHead("练习回顾", "记住哪些方法对你有用") +
       '<div class="feedback-list">' + feedback.map(item => '<div class="feedback-row"><span>' +
         practices[item.key].name + ' · ' + escapeHtml(dateShort.format(new Date(item.date))) +
@@ -507,7 +647,7 @@ function openMode() {
 }
 
 function openPrivacy() {
-  openDialog("隐私与数据", "", '<div class="privacy-copy"><p>你的日记与练习反馈只保存在当前浏览器。网站无需登录，也不会上传这些记录。</p>' +
+  openDialog("隐私与数据", "", '<div class="privacy-copy"><p>你的日记与练习反馈、添加的音频只保存在当前浏览器。网站无需登录，也不会上传这些记录。</p>' +
     '<p>换设备、使用无痕窗口或清理浏览器数据后，原来的记录可能无法访问。</p>' +
     '<p>留白用于日常记录与自我关怀。持续感到困扰时，可以联系可信赖的人或寻求专业支持。</p></div>' +
     '<div class="dialog-actions">' + actionButton("clear", "清除本机数据", "trash", "", "secondary danger") +
@@ -532,49 +672,90 @@ function openPractice(key) {
     '<div class="timer-board">' + (key === "breath" ? '<div id="orb" class="breath-orb" aria-hidden="true"></div>' : careGraphic(key)) +
     '<div id="timer" class="timer-value">' + displayTime(activity.remaining) + '</div><div id="phase" class="helper">准备好了就开始</div></div>' +
     '<ol class="care-instructions">' + item.steps.map(step => '<li>' + step + '</li>').join("") + '</ol>' +
+    (musicTracks[key] ? '<label class="volume-row"><span>音量</span><input type="range" name="volume" min="0" max="100" value="45"></label>' : '') +
     '<div class="dialog-actions"><p class="helper" id="sound-status"></p>' + actionButton("finish", "结束并反馈", "", "", "secondary") +
     actionButton("toggle-timer", "开始", "", "", "primary") + '</div>');
+  if (musicTracks[key]) toggleTimer(dialogContent.querySelector('[data-action="toggle-timer"]'));
+}
+
+function addRain(context, master) {
+  const buffer = context.createBuffer(1, 6 * context.sampleRate, context.sampleRate);
+  const wave = buffer.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < wave.length; i++) {
+    last = 0.91 * last + 0.09 * (2 * Math.random() - 1);
+    wave[i] = last;
+  }
+  const rain = context.createBufferSource();
+  rain.buffer = buffer;
+  rain.loop = true;
+  const filter = context.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = 1450;
+  const gain = context.createGain();
+  gain.gain.value = 0.22;
+  rain.connect(filter).connect(gain).connect(master);
+  rain.start();
+}
+
+function scheduleTone(context, destination, midi, start, duration, level, attack, wave = "sine") {
+  const tone = context.createOscillator();
+  const envelope = context.createGain();
+  tone.type = wave;
+  tone.frequency.value = 440 * 2 ** ((midi - 69) / 12);
+  envelope.gain.setValueAtTime(0.0001, start);
+  envelope.gain.linearRampToValueAtTime(level, start + attack);
+  envelope.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  tone.connect(envelope).connect(destination);
+  tone.start(start);
+  tone.stop(start + duration + 0.03);
 }
 
 function startSound(current) {
   const Audio = window.AudioContext || window.webkitAudioContext;
-  if (!Audio) return;
+  const status = dialogContent.querySelector("#sound-status");
+  if (!Audio) {
+    status.textContent = "当前浏览器无法播放内置音乐。";
+    return;
+  }
   let context;
   try {
     context = new Audio();
-    const buffer = context.createBuffer(1, 4 * context.sampleRate, context.sampleRate);
-    const wave = buffer.getChannelData(0);
-    let last = 0;
-    for (let index = 0; index < wave.length; index++) {
-      last = 0.91 * last + 0.09 * (2 * Math.random() - 1);
-      wave[index] = last;
-    }
-    const rain = context.createBufferSource();
-    rain.buffer = buffer;
-    rain.loop = true;
-    const bass = context.createBiquadFilter();
-    bass.type = "lowpass";
-    bass.frequency.value = 1300;
+    const track = musicTracks[current.key];
     const master = context.createGain();
-    master.gain.value = 0.25;
-    rain.connect(bass).connect(master);
+    master.gain.value = Number(dialogContent.querySelector('[name="volume"]').value) / 100;
     master.connect(context.destination);
-    rain.start();
-    for (const frequency of [130.81, 196, 261.63, 329.63]) {
-      const tone = context.createOscillator();
-      tone.frequency.value = frequency;
-      const toneGain = context.createGain();
-      toneGain.gain.value = 0.035;
-      tone.connect(toneGain).connect(master);
-      tone.start();
+    if (track.rain) addRain(context, master);
+    const elapsed = practices[current.key].minutes * 60 - current.remaining;
+    const seconds = current.remaining;
+    let chordIndex = Math.floor(elapsed / track.interval);
+    let start = context.currentTime + 0.15;
+    const end = start + seconds;
+    while (start + 0.35 < end) {
+      const chord = track.chords[chordIndex % track.chords.length];
+      const length = Math.min(track.interval + 2, end - start);
+      chord.forEach((note, index) => {
+        const offset = current.key === "dawn" ? index * 0.22 : index * 0.09;
+        const duration = length - offset;
+        if (duration < 0.3) return;
+        const attack = Math.min(duration * 0.3, current.key === "dawn" ? 0.035 : 1.45);
+        scheduleTone(context, master, note, start + offset, duration, index === 0 ? 0.09 : 0.052, attack,
+          current.key === "dawn" ? "triangle" : "sine");
+        if (index > 1 && current.key === "twilight" && duration > 2) {
+          scheduleTone(context, master, note + 12, start + offset + 0.5, duration - 0.5, 0.012, 0.8);
+        }
+      });
+      chordIndex += 1;
+      start += track.interval;
     }
     current.sound = context;
+    current.master = master;
     context.resume().catch(() => {
-      if (activity === current) dialogContent.querySelector("#sound-status").textContent = "声音播放受浏览器限制";
+      if (activity === current) status.textContent = "声音播放受浏览器限制。";
     });
   } catch {
     context?.close().catch(() => {});
-    dialogContent.querySelector("#sound-status").textContent = "当前浏览器无法播放声音";
+    status.textContent = "当前浏览器无法播放声音。";
   }
 }
 
@@ -584,6 +765,7 @@ function pausePractice(current) {
   if (current.sound) {
     current.sound.close().catch(() => {});
     current.sound = null;
+    current.master = null;
   }
   dialogContent.querySelector("#orb")?.classList.remove("running");
 }
@@ -622,7 +804,7 @@ function toggleTimer(button) {
   }
   current.end = Date.now() + current.remaining * 1000;
   current.interval = setInterval(() => updateTimer(current), 150);
-  if (current.key === "rain") startSound(current);
+  if (musicTracks[current.key]) startSound(current);
   const orb = dialogContent.querySelector("#orb");
   if (orb) {
     orb.style.animationDelay = "-" + ((practices.breath.minutes * 60 - current.remaining) % 10) + "s";
@@ -647,6 +829,7 @@ function finishPractice() {
 document.querySelectorAll("[data-icon]").forEach(node => node.innerHTML = icon(node.dataset.icon));
 window.addEventListener("hashchange", updateView);
 dialog.addEventListener("close", () => {
+  releaseLocalAudio();
   stopPractice();
   formState = null;
   if (priorFocus?.isConnected) priorFocus.focus();
@@ -655,7 +838,16 @@ dialog.addEventListener("close", () => {
 });
 
 document.addEventListener("submit", saveEntry);
+document.addEventListener("change", event => {
+  if (event.target.id !== "audio-files") return;
+  const files = Array.from(event.target.files);
+  event.target.value = "";
+  importAudio(files);
+});
 dialog.addEventListener("input", event => {
+  if (event.target.name === "volume" && activity?.master) {
+    activity.master.gain.setTargetAtTime(Number(event.target.value) / 100, activity.sound.currentTime, 0.035);
+  }
   if (event.target.name === "intensity") dialogContent.querySelector("#intensity-value").value = event.target.value + "/5";
   if (event.target.name === "note") dialogContent.querySelector("#char-count").textContent = event.target.value.length + "/500";
 });
@@ -706,6 +898,14 @@ document.addEventListener("click", event => {
     case "journal-filter": moodFilter = value; renderAndFocus(action, value); break;
     case "period": period = Number(value); renderAndFocus(action, value); break;
     case "care-filter": practiceFilter = value; renderAndFocus(action, value); break;
+    case "import-audio": document.querySelector("#audio-files")?.click(); break;
+    case "local-audio": openLocalAudio(value); break;
+    case "ask-remove-audio":
+      openDialog("移除这首音频？", "将移除保存在此浏览器里的副本。",
+        '<div class="dialog-actions">' + actionButton("close", "取消", "", "", "secondary") +
+        actionButton("remove-audio", "移除", "trash", value, "primary") + '</div>');
+      break;
+    case "remove-audio": deleteAudio(value); break;
     case "practice": openPractice(value); break;
     case "toggle-timer": toggleTimer(button); break;
     case "finish": finishPractice(); break;
@@ -743,3 +943,4 @@ document.addEventListener("click", event => {
 });
 
 updateView();
+loadAudioLibrary();
