@@ -378,13 +378,30 @@ dialog::backdrop { background: #1d3d3759; backdrop-filter: blur(5px); }
 .practice-art[data-art="breath"]::before { background-position: left top; }
 .practice-art[data-art="reflect"]::before { background-position: right top; }
 .practice-art[data-art="move"]::before { background-position: left bottom; }
-.practice-art[data-art="rain"]::before,
-.practice-art[data-art="dawn"]::before,
-.practice-art[data-art="tide"]::before,
-.practice-art[data-art="twilight"]::before { background-position: right bottom; }
-.practice-art[data-art="dawn"] { filter: sepia(.34) saturate(.82); }
-.practice-art[data-art="tide"] { filter: hue-rotate(20deg) saturate(.8); }
-.practice-art[data-art="twilight"] { filter: hue-rotate(55deg) saturate(.78) brightness(.91); }
+.practice-art[data-art="music"]::before {
+  background-image: url('music-art.webp');
+  background-size: contain;
+  background-position: right center;
+}
+.music-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+}
+.music-controls .secondary { margin-top: 0; }
+.music-select {
+  min-height: 34px;
+  max-width: 100%;
+  border: 1px solid #6e95866b;
+  border-radius: 9px;
+  padding: 4px 7px;
+  background-color: #fbfdf6;
+  color: #254c43;
+  font-size: 12px;
+  cursor: pointer;
+}
 .care-graphic[data-care="dawn"] { background: #eedfc8; color: #5c4b34; }
 .care-graphic[data-care="tide"] { background: #d6e9e8; color: #355959; }
 .care-graphic[data-care="twilight"] { background: #e7e5f1; color: #55496f; }

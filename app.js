@@ -57,10 +57,10 @@ const practices = {
 };
 
 const musicTracks = {
-  rain: { color: "rain", chords: [[48, 55, 60, 64, 67], [45, 52, 57, 60, 64], [41, 48, 53, 57, 64], [43, 50, 55, 60, 62]], interval: 10, rain: true },
-  dawn: { color: "dawn", chords: [[48, 55, 59, 62, 64], [45, 52, 55, 59, 60], [41, 48, 52, 55, 57], [43, 50, 54, 57, 59]], interval: 8 },
-  tide: { color: "tide", chords: [[50, 57, 60, 64, 65], [46, 53, 57, 60, 62], [41, 48, 52, 55, 57], [48, 55, 58, 62, 64]], interval: 11 },
-  twilight: { color: "twilight", chords: [[45, 52, 55, 59, 60], [41, 48, 52, 55, 57], [48, 55, 59, 62, 64], [43, 50, 55, 57, 62]], interval: 12 }
+  rain: { chords: [[48, 55, 60, 64, 67], [45, 52, 57, 60, 64], [41, 48, 53, 57, 64], [43, 50, 55, 60, 62]], interval: 10, rain: true },
+  dawn: { chords: [[48, 55, 59, 62, 64], [45, 52, 55, 59, 60], [41, 48, 52, 55, 57], [43, 50, 54, 57, 59]], interval: 8 },
+  tide: { chords: [[50, 57, 60, 64, 65], [46, 53, 57, 60, 62], [41, 48, 52, 55, 57], [48, 55, 58, 62, 64]], interval: 11 },
+  twilight: { chords: [[45, 52, 55, 59, 60], [41, 48, 52, 55, 57], [48, 55, 59, 62, 64], [43, 50, 55, 57, 62]], interval: 12 }
 };
 
 Object.assign(practices, {
@@ -193,6 +193,7 @@ let view = "home";
 let period = 7;
 let moodFilter = "all";
 let practiceFilter = "all";
+let selectedMusic = "rain";
 let formState = null;
 let activity = null;
 let chartModel = null;
@@ -485,8 +486,23 @@ function insightsPage() {
 }
 
 function careArtwork(key) {
-  const art = musicTracks[key]?.color ?? key;
-  return '<span class="practice-art" data-art="' + art + '" aria-hidden="true"></span>';
+  return '<span class="practice-art" data-art="' + key + '" aria-hidden="true"></span>';
+}
+
+function musicCard() {
+  const tracks = Object.keys(musicTracks);
+  const options = tracks.map(key => {
+    const track = practices[key];
+    return '<option value="' + key + '"' + (key === selectedMusic ? ' selected' : '') +
+      '>' + track.name + ' · ' + track.minutes + ' 分钟</option>';
+  }).join("");
+  return '<article class="surface care-card music-card">' + careArtwork("music") +
+    '<div class="care-card-body">' + careGraphic("rain") +
+    '<div><div class="care-meta">音乐</div><h2>放松音乐</h2></div>' +
+    '<p id="music-description">' + practices[selectedMusic].description + '</p>' +
+    '<div class="music-controls"><label class="sr-only" for="music-select">选择曲目</label>' +
+    '<select id="music-select" class="music-select" aria-describedby="music-description">' + options + '</select>' +
+    actionButton("preview-music", "试听", "play", "", "secondary") + '</div></div></article>';
 }
 
 function audioShelf() {
@@ -505,8 +521,11 @@ function audioShelf() {
 
 function carePage() {
   const recommendation = careRecommendation();
-  const ordered = [recommendation.key, ...Object.keys(practices).filter(key => key !== recommendation.key)];
-  const visible = ordered.filter(key => practiceFilter === "全部" || practices[key].category === practiceFilter);
+  const featured = Object.hasOwn(musicTracks, recommendation.key) ? "music" : recommendation.key;
+  const library = ["breath", "music", "move", "reflect"];
+  const ordered = [featured, ...library.filter(key => key !== featured)];
+  const visible = ordered.filter(key => practiceFilter === "全部" ||
+    (key === "music" ? practiceFilter === "音乐" : practices[key].category === practiceFilter));
   const feedback = demoMode ? [] : personal.feedback.slice(0, 5);
   return subpage("自我关怀", "挑一个当下做得到的小练习，按自己的节奏开始。") +
     '<div class="section-stack"><section class="surface">' +
@@ -515,10 +534,11 @@ function carePage() {
     '<div class="section-head"><h2>练习库</h2><div class="filter-row" aria-label="练习类型">' +
     chips(["全部", "冥想", "音乐", "运动", "书写"], [practiceFilter], "care-filter") + '</div></div>' +
     '<div class="care-grid">' + visible.map(key => {
+      if (key === "music") return musicCard();
       const item = practices[key];
       return '<article class="surface care-card">' + careArtwork(key) + '<div class="care-card-body">' + careGraphic(key) +
         '<div><div class="care-meta">' + item.category + ' · ' + item.minutes + ' 分钟</div><h2>' + item.name +
-        '</h2></div><p>' + item.description + '</p>' + actionButton("practice", item.category === "音乐" ? "试听" : "开始练习", item.category === "音乐" ? "play" : "arrow", key, "secondary") + '</div></article>';
+        '</h2></div><p>' + item.description + '</p>' + actionButton("practice", "开始练习", "arrow", key, "secondary") + '</div></article>';
     }).join("") + '</div></section>' +
     (practiceFilter === "全部" || practiceFilter === "音乐" ? audioShelf() : "") +
     (feedback.length ? '<section class="surface">' + sectionHead("练习回顾", "记住哪些方法对你有用") +
@@ -839,6 +859,11 @@ dialog.addEventListener("close", () => {
 
 document.addEventListener("submit", saveEntry);
 document.addEventListener("change", event => {
+  if (event.target.id === "music-select" && Object.hasOwn(musicTracks, event.target.value)) {
+    selectedMusic = event.target.value;
+    document.querySelector("#music-description").textContent = practices[selectedMusic].description;
+    return;
+  }
   if (event.target.id !== "audio-files") return;
   const files = Array.from(event.target.files);
   event.target.value = "";
@@ -906,6 +931,7 @@ document.addEventListener("click", event => {
         actionButton("remove-audio", "移除", "trash", value, "primary") + '</div>');
       break;
     case "remove-audio": deleteAudio(value); break;
+    case "preview-music": openPractice(selectedMusic); break;
     case "practice": openPractice(value); break;
     case "toggle-timer": toggleTimer(button); break;
     case "finish": finishPractice(); break;
